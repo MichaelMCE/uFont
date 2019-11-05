@@ -107,8 +107,8 @@ int main ()
 	_ufont_surface_t *surface = fontCreateSurface(DWIDTH, DHEIGHT, COLOUR_24TO16(0x777777), NULL);
 	fontSetRenderSurface(&font, surface);		
 
-	time_t t;
-	srand(((time(&t)&77)*GetTickCount())%1000);
+    time_t t;
+    srand(((time(&t)&77)*GetTickCount())%1000);
 	mystifyInit(nodes, TOTAL_NODES);
 	
 	_ufont_surface_t *sprite = fontCreateTexture("images/bs.png");
