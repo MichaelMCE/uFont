@@ -51,16 +51,16 @@ void mystifyUpdateNodes (tlink_t *nodes, const int tnodes)
 	for (int i = 0; i < tnodes; i++){
 		nodes[i].px += nodes[i].dx;
 		nodes[i].py += nodes[i].dy;
-              
+			  
 		if (nodes[i].px < 0){
 			nodes[i].px = 0;
-			nodes[i].dx = 1+(rand()&1);           //different speed, very important, so u dont get same shape
+			nodes[i].dx = 1+(rand()&1);		   //different speed, very important, so u dont get same shape
 			
 		}else if (nodes[i].px >= DWIDTH-1){
 			nodes[i].px = DWIDTH-1;
-			nodes[i].dx = -1*(1+(rand()&1));       //not so sure but works, yup this should be invert
+			nodes[i].dx = -1*(1+(rand()&1));	   //not so sure but works, yup this should be invert
 		}
-              
+			  
 		if (nodes[i].py < 0){
 			nodes[i].py = 0;
 			nodes[i].dy = 1+(rand()&1);
@@ -74,14 +74,14 @@ void mystifyUpdateNodes (tlink_t *nodes, const int tnodes)
 
 void mystifyInit (tlink_t *nodes, const int tnodes)
 {
-    for (int i = 0; i < tnodes; i++){
+	for (int i = 0; i < tnodes; i++){
 		nodes[i].px = rand() % DWIDTH;
 		nodes[i].py = rand() % DHEIGHT;
 		nodes[i].dx = 1;
 		nodes[i].dy = 1;
-    }
-    
-	mystifyUpdateNodes(nodes, tnodes);	
+	}
+	
+	mystifyUpdateNodes(nodes, tnodes);
 }
 
 static inline void clearFrame (void *buffer, const uint16_t colour)
@@ -117,9 +117,9 @@ int main ()
 	do{
 		clearFrame(buffer, COLOUR_WHITE);
 		fontCleanSurface(NULL, surface);
-        
+		
 		mystifyDrawLineConnects(nodes, TOTAL_NODES);
-        mystifyUpdateNodes(nodes, TOTAL_NODES);
+		mystifyUpdateNodes(nodes, TOTAL_NODES);
 
 		//fontApplySurfaceSprite(&font, sprite, COLOUR_BLACK, 1, 1, 0, 0);
 		fontApplySurfaceOutlineEx(&font, 0, 0, 2);
