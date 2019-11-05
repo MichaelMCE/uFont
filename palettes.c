@@ -251,7 +251,7 @@ int main (int argc, char **argv)
 	importPalBin("palettes/palette256.bin", pal16, 256);
 	fontCleanSurface(&font, NULL);
 	y += 2;
-	fontDrawRectangleFilled(&font, 200, y, DWIDTH-150, y+80, 1);
+	fontDrawRectangleFilled(&font, 142, y, DWIDTH-200, y+80, 1);
 	y += 4;// x += 100;
 	fontSetRenderFlags(&font, 0);	// don't advance Y
 	fontSetWriteOp(&font, BFONT_PIXELOP_INVERT);
