@@ -1,1 +1,1 @@
-A crossplatform low footprint font renderer intended for embedded devices
+A crossplatform low footprint text renderer and surface library intended for embedded devices
