@@ -1,6 +1,6 @@
 
-	A crossplatform low footprint text renderer and surface library intended for embedded devices
-
+	A crossplatform low footprint unicode text renderer and surface library intended for embedded devices
+	
 
 ![screenshots of app](./screenshots/fontfun.png)
 ![screenshots of app](./screenshots/anidemo.png)
