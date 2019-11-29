@@ -33,7 +33,7 @@ typedef struct{
 static const char *text = "The quick brown fox jumps over the lazy dog.0123456789:";
 
 
-static inline void swapu32 (int *a, int *b)
+static inline void swapi32 (int *a, int *b)
 {
 	*a ^= *b;
 	*b ^= *a;
@@ -50,9 +50,9 @@ static inline void sortByWidth (uf_met_t *fid, int total)
 	while(i--){
 		for (int j = 0; j < total; j++){
 			if (fid[j].width > fid[j+1].width){
-				swapu32(&fid[j].id, &fid[j+1].id);
-				swapu32(&fid[j].height, &fid[j+1].height);
-				swapu32(&fid[j].width, &fid[j+1].width);
+				swapi32(&fid[j].id, &fid[j+1].id);
+				swapi32(&fid[j].height, &fid[j+1].height);
+				swapi32(&fid[j].width, &fid[j+1].width);
 				
 				strcpy(pathtemp, fid[j+1].file);
 				strcpy(fid[j+1].file, fid[j].file);
