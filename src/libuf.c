@@ -2002,13 +2002,11 @@ static inline int printWordwrap (_ufont_t *font, int *desX, int *desY, const uin
 	int y = *desY;
 
 	const uint16_t userFlags = fontGetRenderFlags(font);
-	//const uint16_t wrapFlags = (userFlags | BFONT_RENDER_ADVANCE_X) &~(BFONT_RENDER_ADVANCE_Y|BFONT_RENDER_WORDWRAP);
-	const uint16_t wrapFlags = BFONT_RENDER_ADVANCE_X | BFONT_RENDER_RETURN|BFONT_RENDER_NEWLINE;
+	const uint16_t wrapFlags = BFONT_RENDER_ADVANCE_X | BFONT_RENDER_RETURN|BFONT_RENDER_NEWLINE | (userFlags&(BFONT_RENDER_GLYPHRECT|BFONT_RENDER_BOUNDRECT));
 	fontSetRenderFlags(font, wrapFlags);
 
 	int maxX = DWIDTH;
 	int maxY = DHEIGHT;
-	
 
 	if (!(font->render.flags&BFONT_RENDER_METRICS)){
 		_ufont_surface_t *surface = fontGetRenderSurface(font);
@@ -2045,10 +2043,9 @@ static inline int printWordwrap (_ufont_t *font, int *desX, int *desY, const uin
 				maxH = 0;
 			}
 			if (y > maxY-1) break;
-			
-			//printf("%i: %i,%i '%s' %i\n", i, x, y, txt[i], strlen( txt[i]));
+
 			int ret = fontPrint(font, &x, &y, txt[i]);
-			//printf("ret %i\n", ret);
+			x += 1;
 			if (x > maxRenderedX) maxRenderedX = x;
 			if (y > maxRenderedY) maxRenderedY = y;
 			if (ret < 1) break;
@@ -2071,13 +2068,11 @@ static inline int printWordwrap8 (_ufont_t *font, int *desX, int *desY, const ui
 	int y = *desY;
 
 	const uint16_t userFlags = fontGetRenderFlags(font);
-	//const uint16_t wrapFlags = (userFlags | BFONT_RENDER_ADVANCE_X) &~(BFONT_RENDER_ADVANCE_Y|BFONT_RENDER_WORDWRAP);
-	const uint16_t wrapFlags = BFONT_RENDER_ADVANCE_X | BFONT_RENDER_RETURN|BFONT_RENDER_NEWLINE;
+	const uint16_t wrapFlags = BFONT_RENDER_ADVANCE_X | BFONT_RENDER_RETURN|BFONT_RENDER_NEWLINE | (userFlags&(BFONT_RENDER_GLYPHRECT|BFONT_RENDER_BOUNDRECT));
 	fontSetRenderFlags(font, wrapFlags);
 
 	int maxX = DWIDTH;
 	int maxY = DHEIGHT;
-	
 
 	if (!(font->render.flags&BFONT_RENDER_METRICS)){
 		_ufont_surface_t *surface = fontGetRenderSurface(font);
@@ -2114,10 +2109,9 @@ static inline int printWordwrap8 (_ufont_t *font, int *desX, int *desY, const ui
 				maxH = 0;
 			}
 			if (y > maxY-1) break;
-			
-			//printf("%i: %i,%i '%s' %i\n", i, x, y, txt[i], strlen( txt[i]));
+
 			int ret = fontPrint8(font, &x, &y, txt[i]);
-			//printf("ret %i\n", ret);
+			x += 1;
 			if (x > maxRenderedX) maxRenderedX = x;
 			if (y > maxRenderedY) maxRenderedY = y;
 			if (ret < 1) break;
