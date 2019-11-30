@@ -1,6 +1,9 @@
 @echo off
 
 REM recalculate verticalPitch, realligning maximum height of glyphs to the largest digit
+REM
+REM Use this after removing glpyh(s) from a font in reset global font metrics
+REM
 
 
 call uflookup "uf_Digits/04b_03-8.uf" -p
