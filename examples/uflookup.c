@@ -103,8 +103,9 @@ static inline size_t writeTable (_lookup_t *table, const uint16_t tglyphs)
 
 static inline int getGlyph (const uint16_t codepoint, _glyph_t *glyph, uint32_t *glyphOffset)
 {
-	*glyphOffset = fontGetGlyphHeader(&font, codepoint, glyph);
-	return (*glyphOffset != 0);
+	uint32_t gOffset = fontGetGlyphHeader(&font, codepoint, glyph);
+	if (glyphOffset) *glyphOffset = gOffset;
+	return (gOffset != 0);
 }
 
 static inline uint8_t *getGlyphPixels (const uint16_t codepoint)
@@ -241,7 +242,7 @@ static inline void cmdDumpPixels (const int var1, const int var2)
 {
 	uint16_t wc = var2&0xFFFF;
 	_glyph_t glyph = {0};
-		
+
 	if (!getGlyph(wc, &glyph, NULL)){
 		printf("encoding %i not found\n", wc);
 		return;
@@ -751,8 +752,8 @@ static inline void cmdDefault (const int var1, const int var2)
 	printf(" -r from-to: Dereference these codepoints from glyph table\n");
 	printf(" -r from+n: Dereference 'n' codepoints beginning at 'from'\n");
 	printf(" -b: Rebuild font according to glyph table. Use this to remove unreferenced glyphs following -r\n");
-	printf(" -f w:h:pixelbyte1,pixelbyte2,pixelbyte3,etc..: find/remove glyph(s) matching this spec");
-	printf(" -z encoding: Find duplicates");
+	printf(" -f w:h:pixelbyte1,pixelbyte2,pixelbyte3,etc..: find/remove glyph(s) matching this spec\n");
+	printf(" -z encoding: Find duplicates\n");
 	printf(" <num>: eg; 65, Display glyph metrics and pixel data for this codepoint\n");	
 }
 

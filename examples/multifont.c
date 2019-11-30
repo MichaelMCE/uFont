@@ -73,9 +73,10 @@ int main (int argc, char **argv)
 
 	int start = utilFontLookup("8x16");	
 	for (int i = start; i < start+4; i++){
-		if (!fontOpen(&font[i], fonts[i]))
+		if (!fontOpen(&font[i], fonts[i])){
+			printf("fontOpen() failed for %i:'%s'\n", i, fonts[i]);
 			continue;
-
+		}
 		printf("font %i: '%s'\n", i, fonts[i]);
 
 		fontSetDisplayBuffer(&font[i], frame->pixels, DWIDTH, DHEIGHT);

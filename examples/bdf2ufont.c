@@ -154,6 +154,9 @@ static inline int writeGlyph (FILE *fp, TWCHAR *wc)
 	}
 */
 
+	if (glyph.dwidth > glyph.w)
+		printf("warning: glyph %i: dwidth is greater than width - %i > %i\n", wc->encoding, glyph.dwidth, glyph.w);
+
 	if (glyph.length < 1){
 		glyph.length = 1;
 		glyphFrame->pixels[0] = 0;
