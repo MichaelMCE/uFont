@@ -108,10 +108,10 @@ static inline int writeGlyph (FILE *fp, TWCHAR *wc)
 	_glyph_t glyph;
 	fillGlyphHeader(&glyph, wc);
 
-
+#if 0
 	if (glyph.dwidth > glyph.w)
 		printf("warning: glyph %i: dwidth is greater than width - %i > %i\n", wc->encoding, glyph.dwidth, glyph.w);
-
+#endif
 	if (glyph.length < 1){
 		glyph.length = 1;
 		glyphFrame->pixels[0] = 0;
