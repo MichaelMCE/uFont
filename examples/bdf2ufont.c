@@ -61,8 +61,7 @@ static inline TFRAME *glyphToFrame (TWCHAR *g)
 	return surface;
 }
 
-#if 0
-static inline int glyphGetLeftPixel (TWCHAR *chr)
+static inline int glyphGetLeftMostPixel (TWCHAR *chr)
 {
 	if (chr->box.left != -1)
 		return chr->box.left;
@@ -81,7 +80,7 @@ static inline int glyphGetLeftPixel (TWCHAR *chr)
 	return chr->box.left;
 }
 
-static inline int glyphGetRightPixel (TWCHAR *chr)
+static inline int glyphGetRightMostPixel (TWCHAR *chr)
 {
 	if (chr->box.right != -1)
 		return chr->box.right;
@@ -96,36 +95,6 @@ static inline int glyphGetRightPixel (TWCHAR *chr)
 	return chr->box.right;
 }
 
-#if 1
-static inline void textRenderGetCharWidth (TWCHAR *chr, int *left)
-{
-	*left = glyphGetLeftPixel(chr);
-	if (*left < 0){
-		*left = 0;
-
-		chr->box.left = 0;
-		chr->box.right = 2;
-	}
-}
-#else
-static inline int textRenderGetCharWidth (TWCHAR *chr, int *left, int *right)
-{
-	*left = glyphGetLeftPixel(chr);
-	if (*left < 0){
-		*left = 0;
-		*right = 2;
-		
-		chr->box.left = 0;
-		chr->box.right = 2;
-	}else{
-		*right = glyphGetRightPixel(chr);
-	}
-
-	return min(chr->w, (*right-*left)+1);
-}
-#endif
-#endif
-
 
 static inline int writeGlyph (FILE *fp, TWCHAR *wc)
 {
@@ -138,21 +107,7 @@ static inline int writeGlyph (FILE *fp, TWCHAR *wc)
 
 	_glyph_t glyph;
 	fillGlyphHeader(&glyph, wc);
-/*
-	int left = 0;
-	textRenderGetCharWidth(wc, &left);
 
-	if (left != 0)
-		printf("left for %i is %i\n", wc->encoding, left);
-	glyph.xOffset += left;
-*/
-
-/*	
-	if (wc->encoding == L' '){
-		glyph.dwidth += 0 +(int)(0.03*wc->dwidth);	// they ain't magic for a reason.. if it works they work.
-		if (glyph.length < 1) glyph.length = 1;
-	}
-*/
 
 	if (glyph.dwidth > glyph.w)
 		printf("warning: glyph %i: dwidth is greater than width - %i > %i\n", wc->encoding, glyph.dwidth, glyph.w);
@@ -179,8 +134,6 @@ static inline int writeGlyph (FILE *fp, TWCHAR *wc)
 
 	fwrite(&glyph, 1, sizeof(glyph), fp);
 	fwrite(glyphFrame->pixels, 1, pixelBufferSize, fp);
-	
-	//printf(" (%i) pixels length %i %i\n", wc->encoding, pixelBufferSize, glyphFrame->frameSize);
 
 	return 1;
 }
@@ -188,7 +141,6 @@ static inline int writeGlyph (FILE *fp, TWCHAR *wc)
 static inline void fillFontHeader (_ufont_header_t *header, TWFONT *font)
 {
 	header->ident = BFONT_IDENT;					// version ident
-
 	header->verticalPitch = font->PixelSize;		// BDF 'PIXEL_SIZE' field describing maximum rows, ie height
 	header->fontAscent = font->fontAscent;			// BDF 'FONT_ASCENT' field
 	header->fontDescent = font->fontDescent;		// BDF 'FONT_DESCENT' field
@@ -362,9 +314,7 @@ int createFont (wchar_t *filename, const int fontid, int8_t *encList)
 	
 				table[ct].encoding = wc->encoding;
 				table[ct].offset = ftell(fp);
-			
-				//printf("%i %i %i %i\n", c, table[ct].encoding, table[ct].offset, ct);
-				
+
 				int ret = writeGlyph(fp, wc);
 				if (!ret)
 					printf(" skipped: %i\n", table[ct].encoding);
@@ -402,16 +352,12 @@ static inline int buildEncTable (char *opt, int8_t *list)
 	for (int i = 0; opt[i+1]; i++){
 		if (opt[i] == ','){
 			opt[i] = 0;
-			//printf("ct %i %i\n", i, ct);
 			fields[ct] = &opt[i+1];
 			ct++;
 		}
 	}
-
 	
 	for (int i = 0; i < ct; i++){
-		//printf("%i: '%s'\n", i, fields[i]);
-		
 		if (fields[i][0] != '+' && fields[i][0] != '-')
 			continue;
 		if (!isdigit(fields[i][1]))
@@ -427,16 +373,11 @@ static inline int buildEncTable (char *opt, int8_t *list)
 			if (c == '+'){
 				for (int j = from; j <= to; j++)
 					list[j] = 0xFF;
-					
-				//printf("  adding ");
+
 			}else if (c == '-'){
 				for (int j = from; j <= to; j++)
 					list[j] = 0;
-
-				//printf("  removing ");
 			}
-			//printf("  %i to %i\n", from, to);
-
 		}else if (fields[i][0] == '+'){
 			int a = 0;
 			char c;
@@ -445,8 +386,6 @@ static inline int buildEncTable (char *opt, int8_t *list)
 			a &= 0xFFFF;
 			
 			list[a] = 0xFF;			
-			//printf("  adding   %i\n", a);
-		
 		}else if (fields[i][0] == '-'){
 			int a = 0;
 			char c;
@@ -455,7 +394,6 @@ static inline int buildEncTable (char *opt, int8_t *list)
 			a &= 0xFFFF;
 			
 			list[a] = 0;
-			//printf("  removing   %i\n", a);
 		}
 	}
 
