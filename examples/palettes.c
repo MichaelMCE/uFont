@@ -15,8 +15,8 @@
 
 #include "common.h"
 
-#define FONT UFDIR"76london38.uf"
-static const uint8_t *text = (uint8_t*)"Hello World!";
+#define FONT	UFDIR"76london38.uf"
+static const char *text = "Hello World!";
 
 
 
@@ -82,7 +82,6 @@ static inline void RGB24ToRGB16 (uint8_t *pal24, uint16_t *pal16, int tpixels)
 	
 	for (int i = 0; i < tpixels; i++){
 		uint32_t col = *(uint32_t*)(&pal24[i*3])&0xFFFFFF;
-		//printf("%i: %X\n", i, col);
 		pal16[i] = COLOUR_24TO16(col);
 	}
 
@@ -117,10 +116,8 @@ static inline void genPaletteFire (uint16_t *pal16, const int32_t tColours)
 static inline int importPalAsc (char *file, uint16_t *pal16, const int32_t tColours)
 {
 	fileio_t *fio = fio_open((uint8_t*)file, FIO_READ);
-	if (!fio)
-		return 0;
+	if (!fio) return 0;
 
-	
 	uint8_t pal24[tColours*3];
 	uint8_t *buffer = pal24;
 
@@ -136,7 +133,6 @@ static inline int importPalAsc (char *file, uint16_t *pal16, const int32_t tColo
 		buffer[0] = b&0xFF;
 		buffer += 3;
 		ct++;
-		//printf("ct %i\n", ct);
 	};
 	
 	fio_close(fio);
@@ -178,7 +174,7 @@ int main (int argc, char **argv)
 {
 
 	if (!initDemoConfig("config.cfg"))
-		return 0;
+		return EXIT_FAILURE;
 
 
 	_ufont_t font;
@@ -242,7 +238,6 @@ int main (int argc, char **argv)
 	fontApplySurfaceOutline(&font, 0, 0);
 
 
-
 	fontSetPaletteAxis(surface, SURFACE_PALETTE_DIR_V);
 	importPalBin("palettes/palette256.bin", pal16, 256);
 	fontCleanSurface(&font, NULL);
@@ -275,11 +270,10 @@ int main (int argc, char **argv)
 	fontClose(&font);
 
 	lUpdate(hw, buffer, sizeof(buffer));
-	Sleep(50000);
+	lSleep(50000);
 
 	demoCleanup();
-
-	return 1;
+	return EXIT_SUCCESS;
 }
 
 
