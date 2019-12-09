@@ -380,13 +380,11 @@ _ufont_surface_t *fontCreateTexture (const char *path);
 void fontTextureFree (_ufont_surface_t *surface);
 void fontTextureSetClamp (_ufont_surface_t *surface, const uint16_t dir);
 
-
 _ufont_palette_t *fontPaletteCreate (void *pixels, const uint16_t total);
 _ufont_palette_t *fontPaletteLoad (const char *path);
 void fontPaletteFree (_ufont_palette_t *pal);
 void fontPaletteSetColour (_ufont_palette_t *pal, const uint16_t idx, const uint16_t colour);
 uint16_t fontPaletteGetColour (_ufont_palette_t *pal, const uint16_t idx);
-
 
 void fontApplySurface (_ufont_t *font, int startX, int startY);
 void fontApplySurfaceOutline (_ufont_t *font, int startX, int startY);
@@ -397,7 +395,6 @@ void fontApplySurfaceTexture (_ufont_t *font, const _ufont_surface_t *const tex,
 void fontApplySurfaceTextureEx (_ufont_t *font, const _ufont_surface_t *const tex, int startX, int startY, const int effect, uint32_t time1);
 void fontApplySurfaceSprite (_ufont_t *font, _ufont_surface_t *tex, const uint16_t maskCol, uint8_t texStrideX, uint8_t texStrideY, int startX, int startY);
 void fontApplySurfaceMask (_ufont_t *font, _ufont_surface_t *mask, int startX, int startY);
-
 
 
 void fontSetRenderColour (_ufont_surface_t *surface, const uint16_t colour);
@@ -452,10 +449,8 @@ int metricsGetGlyphHeader (_ufont_t *font, const uint16_t codepoint, _glyph_t *g
 uint8_t *fontGetGlyphPixels (_ufont_t *font, const uint16_t codepoint);
 
 
-
-
-
 #define fontGetWidth(a)		(((_ufont_surface_t*)a)->width)
 #define fontGetHeight(a)	(((_ufont_surface_t*)a)->height)
+
 
 #endif
