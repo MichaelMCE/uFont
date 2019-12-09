@@ -58,8 +58,8 @@ int main (int argc, char **argv)
 		fontFile = argv[1];
 		enc = hexToInt16(argv[2]);		
 	}else if (argc == 1){
-		printf("Usage: glyph.exe font.uf encoding\n");
-		printf("Usage: glyph.exe encoding\n\n");
+		printf("Usage: glyph.exe font.uf <encoding>\n");
+		printf("Usage: glyph.exe <encoding>\n\n");
 		enc = 'A';
 	}
 
@@ -107,7 +107,7 @@ int main (int argc, char **argv)
 	fontGetMetricsW(&font[0], text, &width, &height);
 
 	_ufont_surface_t *surface[2];
-	surface[0] = fontCreateSurface(width+2, height+2, COLOUR_24TO16(0x666666), NULL);
+	surface[0] = fontCreateSurface(width+32, height+32, COLOUR_24TO16(0x666666), NULL);
 	surface[1] = fontCreateSurface(DWIDTH, DHEIGHT, COLOUR_24TO16(0x666666), NULL);
 	fontSetRenderSurface(&font[0], surface[0]);
 	fontSetRenderSurface(&font[1], surface[1]);
@@ -134,11 +134,13 @@ int main (int argc, char **argv)
 	y = abs(surface[0]->height - height)/2;
 	fontPrintW(&font[0], &x, &y, text);
 
-
 	x = abs(DWIDTH - surface[0]->width)/2;
 	y = abs(DHEIGHT - surface[0]->height)/2;
+	fontSetRenderColour(surface[0], COLOUR_GREY);
+	fontApplySurfaceOutlineEx(&font[0], x, y, 4);
+	fontSetRenderColour(surface[0], COLOUR_BLACK);
 	fontApplySurface(&font[0], x, y);
-	//fontApplySurfaceOutline(&font[0], x, y);
+
 	fontApplySurface(&font[1], 0, 0);
 
 	lUpdate(hw, buffer, sizeof(buffer));
