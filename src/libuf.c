@@ -2650,14 +2650,12 @@ _ufont_surface_t *fontCreateTexture (const char *path)
 		}
 		
 		_ufont_surface_t *surface = (_ufont_surface_t*)uf_calloc(1, sizeof(_ufont_surface_t));
-		if (surface){
+		if (surface && pixels){
+			fontSurfaceFill(surface, width, height, 0, pixels);
+			surface->flags8 |= SURFACE_PALLOC;
+			surface->bpp = SURFACE_BPP_16;		
 			surface->size = height * CALC_PITCH_16(width);
-			if (pixels){
-				fontSurfaceFill(surface, width, height, 0, pixels);
-				surface->flags8 |= SURFACE_PALLOC;
-				surface->bpp = SURFACE_BPP_16;		
-				return surface;
-			}
+            return surface;
 		}
 	}
 
