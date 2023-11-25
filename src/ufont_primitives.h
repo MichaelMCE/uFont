@@ -27,7 +27,9 @@ void fontDrawCircleFilled (_ufont_t *font, int xc, int yc, const int radius, con
 void fontDrawEllipse (_ufont_t *font, const int x, const int y, const int r1, const int r2, const uint32_t set);
 void fontDrawArc (_ufont_t *font, const int x, const int y, const int r1, const int r2, float a1, float a2, const uint32_t set);
 void fontInvertRectangle (_ufont_t *font, int x1, int y1, int x2, int y2);
-
+void fontDrawTriangle (_ufont_t *font, int x1, int y1, int x2, int y2, int x3, int y3, const uint32_t set);
+void fontDrawTriangleFilled (_ufont_t *font, const int x1, const int y1, const int x2, const int y2, const int x3, const int y3, const uint32_t set);
+void fontDrawLineDotted (_ufont_t *font, int x1, int y1, int x2, int y2, const uint32_t set);
 
 
 // 16bit primitives. draw to distination/display surface (fontS/GetDisplayBuffer())
@@ -38,9 +40,10 @@ void surfaceDrawCircle (_ufont_surface_t *surface, const int xc, const int yc, c
 void surfaceDrawCircleFilled (_ufont_surface_t *surface, int xc, int yc, const int radius, const uint16_t colour);
 void surfaceDrawEllipse (_ufont_surface_t *surface, const int x, const int y, const int r1, const int r2, const uint16_t colour);
 void surfaceDrawArc (_ufont_surface_t *surface, const int x, const int y, const int r1, const int r2, float a1, float a2, const uint16_t colour);
-
-
-
+void surfaceDrawTriangle (_ufont_surface_t *surface, int x1, int y1, int x2, int y2, int x3, int y3, const uint16_t colour);
+void surfaceDrawTriangleFilled (_ufont_surface_t *surface, const int x1, const int y1, const int x2, const int y2, const int x3, const int y3, const uint16_t colour);
+void surfaceDrawLineDotted (_ufont_surface_t *surface, int x1, int y1, int x2, int y2, const uint16_t colour);
+void surfaceDrawImage (_ufont_surface_t *surface, _ufont_surface_t *image, const int isCentered, const int cx, const int cy);
 
 
 // set without bound checking
@@ -54,17 +57,17 @@ static inline void unsetPixel1_nb (_ufont_surface_t *surface, const int pitch, c
 	*(surface->pixels+((y*pitch)+(x>>3))) &= ~(1<<(x&7));
 }
 
-static inline void unsetPixel1_bc (_ufont_surface_t *surface, const int pitch, const int x, const int y)
-{
-	if (x >= 0 && x < surface->width && y >= 0 && y < surface->height)
-		*(surface->pixels+((y*pitch)+(x>>3))) &= ~(1<<(x&7));
-}
-
 // set with bound checking
 static inline void setPixel1_bc (_ufont_surface_t *surface, const int pitch, const int x, const int y)
 {
 	if (x >= 0 && x < surface->width && y >= 0 && y < surface->height)
 		setPixel1_nb(surface, pitch, x, y);
+}
+
+static inline void unsetPixel1_bc (_ufont_surface_t *surface, const int pitch, const int x, const int y)
+{
+	if (x >= 0 && x < surface->width && y >= 0 && y < surface->height)
+		*(surface->pixels+((y*pitch)+(x>>3))) &= ~(1<<(x&7));
 }
 
 static inline void unsetPixel1 (uint8_t *pixels, const int x)
@@ -112,5 +115,27 @@ static inline uint16_t getPixel16 (uint8_t *pixels, const int pitch, const int x
 {
 	return *((uint16_t*)(pixels+(pitch*y)+(x<<1)));
 }
+
+static inline uint16_t getPixel16_bc (_ufont_surface_t *surface, const int x, const int y)
+{
+	if (x >= 0 && x < surface->width && y >= 0 && y < surface->height)
+		return *((uint16_t*)(surface->pixels+((surface->width<<1)*y)+(x<<1)));
+	else
+		return 0;
+}
+
+static inline void surfaceDrawCopy (_ufont_surface_t *surface, const int x1, const int y1, const int x2, const int y2, const int des_x, const int des_y)
+{
+	int dy = des_y;
+		
+	for (int y = y1; y <= y2; y++, dy++){
+		int dx = des_x;
+		for (int x = x1; x <= x2; x++){
+			uint16_t col = getPixel16_bc(surface, x, y);
+			setPixel16_bc(surface, dx++, dy, col);
+		}
+	}
+}
+
 
 #endif

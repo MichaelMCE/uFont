@@ -23,6 +23,7 @@
 #include "ufont_config.h"
 #include "fio/fileio.h"
 
+
 #ifndef UFDIR
 
 #if FONTS_LLATIN
@@ -38,32 +39,9 @@
 #endif
 
 
+#define BFONT_EXT				L".uf"
 
-
-
-// RGB24 to RGB565
-#define COLOUR_24TO16(c)		((uint16_t)(((((c)>>16)&0xF8)<<8) | ((((c)>>8)&0xFC)<<3) | (((c)&0xF8)>>3)))
-
-// 4bit gray scale to RGB565
-#define COLOUR_G4TO16(c)		((uint16_t)((((c)&0x0F)<<12) | (((c)&0x0F)<<7) | ((c)&0x0F)<<1))
-
-// 8bit gray scale to RGB24
-#define COLOUR_G8TO24(c)		((uint32_t)(((c)<<16) | ((c)<<8) | ((c)&0xFF)))
-
-#define COLOUR_RED				RGB_16_RED
-#define COLOUR_GREEN			RGB_16_GREEN
-#define COLOUR_BLUE				RGB_16_BLUE
-#define COLOUR_WHITE			RGB_16_WHITE
-#define COLOUR_BLACK			RGB_16_BLACK
-#define COLOUR_MAGENTA			RGB_16_MAGENTA
-#define COLOUR_YELLOW			RGB_16_YELLOW
-#define COLOUR_CYAN				RGB_16_CYAN
-#define COLOUR_CREAM			COLOUR_24TO16(0xEEE7D0)
-#define COLOUR_GREY				COLOUR_24TO16(0x111111 * 7)
-
-#define BFONT_COLOUR_BOUNDRECT	COLOUR_RED
-#define BFONT_COLOUR_GLYPHRECT	COLOUR_BLUE
-
+#define BFONT_CACHE_SIZE		32				// number of glyphs to store before flushing
 
 
 #define BFONT_RENDER_GLYPHCLIP	0x0001			// render only if complete glyph is renderable within surface area, or clip at surface bound
@@ -105,11 +83,6 @@
 #define BFONT_FLAGS_PROPSPACE	0x20			// glyphs are proportionaly spaced; 'i' is [usually] narrower than 'M'
 #define BFONT_FLAGS_HASLOOKUP	0x40			// contains an encoding-to-file offset lookup table
 
-#define BFONT_CACHE_SIZE		32
-#define BFONT_EXT				L".uf"
-
-
-
 #define SURFACE_PALLOC			0x01		// alloc'd .pixels should be freed with deconstructor
 #define SURFACE_PALETTE_DIR		0x02		// Sets how the palette is applied to the surface. if set then horizontal, otherwise vertical
 #define SURFACE_TEXCLAMP_H		0x10
@@ -128,6 +101,33 @@
 #define CALC_PITCH_16(w)		((w)*sizeof(uint16_t))		// 16bit (8 bits per byte)
 
 #define DEG2RAD					(0.0174532925195)
+
+
+
+// RGB24 to RGB565
+#define COLOUR_24TO16(c)		((uint16_t)(((((c)>>16)&0xF8)<<8) | ((((c)>>8)&0xFC)<<3) | (((c)&0xF8)>>3)))
+
+// 4bit gray scale to RGB565
+#define COLOUR_G4TO16(c)		((uint16_t)((((c)&0x0F)<<12) | (((c)&0x0F)<<7) | ((c)&0x0F)<<1))
+
+// 8bit gray scale to RGB24
+#define COLOUR_G8TO24(c)		((uint32_t)(((c)<<16) | ((c)<<8) | ((c)&0xFF)))
+
+#define COLOUR_RED				RGB_16_RED
+#define COLOUR_GREEN			RGB_16_GREEN
+#define COLOUR_BLUE				RGB_16_BLUE
+#define COLOUR_WHITE			RGB_16_WHITE
+#define COLOUR_BLACK			RGB_16_BLACK
+#define COLOUR_MAGENTA			RGB_16_MAGENTA
+#define COLOUR_YELLOW			RGB_16_YELLOW
+#define COLOUR_CYAN				RGB_16_CYAN
+#define COLOUR_CREAM			COLOUR_24TO16(0xEEE7D0)
+#define COLOUR_GREY				COLOUR_24TO16(0x111111 * 7)
+#define COLOUR_BROWN			COLOUR_24TO16(0x964B00)
+
+#define BFONT_COLOUR_BOUNDRECT	COLOUR_RED
+#define BFONT_COLOUR_GLYPHRECT	COLOUR_BLUE
+
 
 
 
@@ -190,12 +190,14 @@
 
 #ifdef max
 #undef max
-#define max(a,b) (((a) > (b)) ? (a) : (b))
 #endif
+#define max(a,b) (((a) > (b)) ? (a) : (b))
+
 #ifdef min
 #undef min
-#define min(a,b) (((a) < (b)) ? (a) : (b))
 #endif
+#define min(a,b) (((a) < (b)) ? (a) : (b))
+
 
 #define clipInt5(x)\
 	if ((x) > 0x1F) (x) = 0x1F;\
@@ -448,9 +450,13 @@ int metricsGetGlyphHeader (_ufont_t *font, const uint16_t codepoint, _glyph_t *g
 // pointer is invalidated upon fontCleanCache()
 uint8_t *fontGetGlyphPixels (_ufont_t *font, const uint16_t codepoint);
 
+// load an image directly on to surface.
+int fontLoadTexture (_ufont_surface_t *surface, const char *path, const int x, const int y);
+
 
 #define fontGetWidth(a)		(((_ufont_surface_t*)a)->width)
 #define fontGetHeight(a)	(((_ufont_surface_t*)a)->height)
+#define fontGetPixels(a)	(((_ufont_surface_t*)a)->pixels)
 
 
 #endif

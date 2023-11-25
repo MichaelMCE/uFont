@@ -489,6 +489,34 @@ void surfaceDrawRectangle (_ufont_surface_t *surface, int x1, int y1, int x2, in
 		drawRectangle1(surface, x1, y1, x2, y2, colour!=0);
 }
 
+static inline void drawTriangle16 (_ufont_surface_t *surface, int x1, int y1, int x2, int y2, int x3, int y3, const uint16_t colour)
+{
+	drawLine16(surface, x1, y1, x2, y2, colour);
+	drawLine16(surface, x2, y2, x3, y3, colour);
+	drawLine16(surface, x3, y3, x1, y1, colour);
+}
+
+static inline void drawTriangle1 (_ufont_surface_t *surface, int x1, int y1, int x2, int y2, int x3, int y3, const uint32_t set)
+{
+	drawLine1(surface, x1, y1, x2, y2, set);
+	drawLine1(surface, x2, y2, x3, y3, set);
+	drawLine1(surface, x3, y3, x1, y1, set);
+}
+
+void surfaceDrawTriangle (_ufont_surface_t *surface, int x1, int y1, int x2, int y2, int x3, int y3, const uint16_t colour)
+{
+	if (surface->bpp == SURFACE_BPP_16)
+		drawTriangle16(surface, x1, y1, x2, y2, x3, y3, colour);
+	else if (surface->bpp == SURFACE_BPP_1)
+		drawTriangle1(surface, x1, y1, x2, y2, x3, y3, colour!=0);
+}
+
+void fontDrawTriangle (_ufont_t *font, int x1, int y1, int x2, int y2, int x3, int y3, const uint32_t set)
+{
+	_ufont_surface_t *surface = fontGetRenderSurface(font);
+	drawTriangle1(surface, x1, y1, x2, y2, x3, y3, set&0x01);
+}
+
 static inline void circlePts16 (_ufont_surface_t *surface, int xc, int yc, int x, int y, const uint16_t colour)
 {
 	setPixel16_bc(surface, xc+y, yc-x, colour);
@@ -702,6 +730,7 @@ static inline void drawArc16 (_ufont_surface_t *surface, const int x, const int 
 	const int N = fabsf(a2-a1)+8.0f;
 	const float da = (a2-a1)*(2.0f*pipi/360.0f)/(float)(N-1.0f);
 	const float a = a1*2.0f*pipi/360.0f;
+
 	float lastx = x + (r1*cosf(a));
 	float lasty = y + (r2*sinf(a));
 
@@ -756,6 +785,324 @@ void fontInvertRectangle (_ufont_t *font, int x1, int y1, int x2, int y2)
 				unsetPixel1_nb(surface, pitch, x, y);
 		}
 	}
+}
+
+static inline void swapd (double *a, double *b) 
+{ 
+	double tmp = *a;
+	*a = *b;
+	*b = tmp;
+}
+
+void surfaceDrawTriangleFilled1 (_ufont_surface_t *surface, const int x0, const int y0, const int x1, const int y1, const int x2, const int y2, const uint32_t set)
+{
+	const int srcPitch = CALC_PITCH_1(surface->width);
+	
+	double XA, XB;
+  	double XA1 = 0.0, XB1 = 0.0, XC1 = 0.0;
+  	double XA2, XB2;
+  	double XAd, XBd; 
+  	double HALF;
+  	
+	int t = y0;
+	int b = y0;
+	int CAS = 0;
+	
+	if (y1 < t){
+		t = y1;
+		CAS = 1;
+	}
+	if (y1 > b)
+		b = y1;
+		
+	if (y2 < t){
+		t = y2;
+		CAS = 2;
+	}
+	if (y2 > b)
+		b = y2;
+   	
+	if (CAS == 0){
+		XA = x0;
+		XB = x0;
+		XA1 = (x1-x0)/(double)(y1-y0);
+		XB1 = (x2-x0)/(double)(y2-y0);
+		XC1 = (x2-x1)/(double)(y2-y1);
+		
+		if (y1<y2){
+			HALF = y1;
+      		XA2 = XC1;
+      		XB2 = XB1;
+    	}else{
+    		HALF = y2;
+      		XA2 = XA1;
+      		XB2 = XC1;
+    	}
+		if (y0 == y1)
+			XA = x1;
+		if (y0 == y2)
+			XB = x2;
+  	}else if (CAS == 1){
+    	XA = x1;
+    	XB = x1;
+    	XA1 = (x2-x1)/(double)(y2-y1);
+    	XB1 = (x0-x1)/(double)(y0-y1);
+    	XC1 = (x0-x2)/(double)(y0-y2);
+    	
+    	if ( y2 < y0){
+    		HALF = y2;
+      		XA2 = XC1;
+      		XB2 = XB1;
+    	}else{
+    		HALF = y0;
+      		XA2 = XA1;
+      		XB2 = XC1;
+    	} 
+    	if (y1 == y2)
+    		XA = x2;
+    	if (y1 == y0)
+			XB = x0;
+	}else if (CAS == 2){
+		XA = x2;
+		XB = x2;
+    	XA1 = (x0-x2)/(double)(y0-y2);
+    	XB1 = (x1-x2)/(double)(y1-y2);
+    	XC1 = (x1-x0)/(double)(y1-y0);
+    	if (y0<y1){
+    		HALF = y0;
+      		XA2 = XC1;
+      		XB2 = XB1;
+    	}else{
+    		HALF = y1;
+      		XA2 = XA1;
+      		XB2 = XC1;
+    	}
+    	if (y2 == y0)
+    		XA = x0;
+    	if (y2 == y1)
+    		XB = x1;
+	}
+  
+	if (XA1 > XB1){
+		swapd(&XA, &XB);
+		swapd(&XA1, &XB1);
+		swapd(&XA2, &XB2);
+	}
+  
+	for (int y = t; y < HALF; y++){
+		XAd = XA;
+		XBd = XB;
+		for (int x = XAd; x <= XBd; x++)
+			setPixel1_bc(surface, srcPitch, x, y);
+		XA += XA1;
+		XB += XB1;	
+	}
+
+	for (int y = HALF; y <= b; y++){
+		XAd = XA;
+		XBd = XB;
+		for (int x = XAd; x <= XBd; x++)
+			setPixel1_bc(surface, srcPitch, x, y);
+		XA += XA2;
+		XB += XB2;	
+	}
+}
+
+void surfaceDrawTriangleFilled16 (_ufont_surface_t *surface, const int x0, const int y0, const int x1, const int y1, const int x2, const int y2, const uint16_t colour)
+{
+	double XA, XB;
+  	double XA1 = 0.0, XB1 = 0.0, XC1 = 0.0;
+  	double XA2, XB2;
+  	double XAd, XBd; 
+  	double HALF;
+  	
+	int t = y0;
+	int b = y0;
+	int CAS = 0;
+	
+	if (y1 < t){
+		t = y1;
+		CAS = 1;
+	}
+	if (y1 > b)
+		b = y1;
+		
+	if (y2 < t){
+		t = y2;
+		CAS = 2;
+	}
+	if (y2 > b)
+		b = y2;
+   	
+	if (CAS == 0){
+		XA = x0;
+		XB = x0;
+		XA1 = (x1-x0)/(double)(y1-y0);
+		XB1 = (x2-x0)/(double)(y2-y0);
+		XC1 = (x2-x1)/(double)(y2-y1);
+		
+		if (y1<y2){
+			HALF = y1;
+      		XA2 = XC1;
+      		XB2 = XB1;
+    	}else{
+    		HALF = y2;
+      		XA2 = XA1;
+      		XB2 = XC1;
+    	}
+		if (y0 == y1)
+			XA = x1;
+		if (y0 == y2)
+			XB = x2;
+  	}else if (CAS == 1){
+    	XA = x1;
+    	XB = x1;
+    	XA1 = (x2-x1)/(double)(y2-y1);
+    	XB1 = (x0-x1)/(double)(y0-y1);
+    	XC1 = (x0-x2)/(double)(y0-y2);
+    	
+    	if ( y2 < y0){
+    		HALF = y2;
+      		XA2 = XC1;
+      		XB2 = XB1;
+    	}else{
+    		HALF = y0;
+      		XA2 = XA1;
+      		XB2 = XC1;
+    	} 
+    	if (y1 == y2)
+    		XA = x2;
+    	if (y1 == y0)
+			XB = x0;
+	}else if (CAS == 2){
+		XA = x2;
+		XB = x2;
+    	XA1 = (x0-x2)/(double)(y0-y2);
+    	XB1 = (x1-x2)/(double)(y1-y2);
+    	XC1 = (x1-x0)/(double)(y1-y0);
+    	if (y0<y1){
+    		HALF = y0;
+      		XA2 = XC1;
+      		XB2 = XB1;
+    	}else{
+    		HALF = y1;
+      		XA2 = XA1;
+      		XB2 = XC1;
+    	}
+    	if (y2 == y0)
+    		XA = x0;
+    	if (y2 == y1)
+    		XB = x1;
+	}
+  
+	if (XA1 > XB1){
+		swapd(&XA, &XB);
+		swapd(&XA1, &XB1);
+		swapd(&XA2, &XB2);
+	}
+  
+	for (int y = t; y < HALF; y++){
+		XAd = XA;
+		XBd = XB;
+		for (int x = XAd; x <= XBd; x++)
+			setPixel16_bc(surface, x, y, colour);
+		XA += XA1;
+		XB += XB1;	
+	}
+
+	for (int y = HALF; y <= b; y++){
+		XAd = XA;
+		XBd = XB;
+		for (int x = XAd; x <= XBd; x++)
+			setPixel16_bc(surface, x, y, colour);
+		XA += XA2;
+		XB += XB2;	
+	}
+}
+
+void fontDrawTriangleFilled (_ufont_t *font, const int x1, const int y1, const int x2, const int y2, const int x3, const int y3, const uint32_t set)
+{
+	_ufont_surface_t *surface = fontGetRenderSurface(font);
+	surfaceDrawTriangleFilled1(surface, x1, y1, x2, y2, x3, y3, set!=0);
+}
+
+void surfaceDrawTriangleFilled (_ufont_surface_t *surface, const int x1, const int y1, const int x2, const int y2, const int x3, const int y3, const uint16_t colour)
+{
+	if (surface->bpp == SURFACE_BPP_16)
+		surfaceDrawTriangleFilled16(surface, x1, y1, x2, y2, x3, y3, colour);
+	else if (surface->bpp == SURFACE_BPP_1)
+		surfaceDrawTriangleFilled1(surface, x1, y1, x2, y2, x3, y3, colour!=0);
+}
+
+void surfaceDrawLineDotted16 (_ufont_surface_t *surface, int x0, int y0, int x1, int y1, const uint16_t colour)
+{
+
+	if (!clipLine(surface, x0, y0, x1, y1, &x0, &y0, &x1, &y1))
+		return;
+		
+	int dy = y1 - y0;
+	int dx = x1 - x0;
+	
+	int stepx, stepy;
+	uint16_t *pixels = (uint16_t*)surface->pixels;
+	
+	if (dy < 0) { dy = -dy;  stepy = -surface->width; } else { stepy = surface->width; }
+	if (dx < 0) { dx = -dx;  stepx = -1; } else { stepx = 1; }
+	dy <<= 1;
+	dx <<= 1;
+	
+	y0 *= surface->width;
+	y1 *= surface->width;
+	pixels[x0+y0] = colour;
+	
+	int alt = 0;
+	
+	if (dx > dy){
+	    int fraction = dy - (dx >> 1);
+	    while (x0 != x1) {
+	        if (fraction >= 0) {
+	            y0 += stepy;
+	            fraction -= dx;
+	        }
+	        x0 += stepx;
+	        fraction += dy;
+	        
+	        if (alt++&0x01)
+	        	pixels[x0+y0] = colour;
+	    }
+	}else{
+	    int fraction = dx - (dy >> 1);
+	    while (y0 != y1) {
+	        if (fraction >= 0) {
+	            x0 += stepx;
+	            fraction -= dy;
+	        }
+	        y0 += stepy;
+	        fraction += dx;
+	        
+	        if (alt++&0x01)
+	       		pixels[x0+y0] = colour;
+	    }
+	}
+}
+
+void surfaceDrawLineDotted1_set (_ufont_surface_t *surface, int x1, int y1, int x2, int y2)
+{
+
+}
+
+void fontDrawLineDotted (_ufont_t *font, int x1, int y1, int x2, int y2, const uint32_t set)
+{
+	_ufont_surface_t *surface = fontGetRenderSurface(font);
+	surfaceDrawLineDotted1_set(surface, x1, y1, x2, y2);
+}
+
+void surfaceDrawLineDotted (_ufont_surface_t *surface, int x1, int y1, int x2, int y2, const uint16_t colour)
+{
+	if (surface->bpp == SURFACE_BPP_16)
+		surfaceDrawLineDotted16(surface, x1, y1, x2, y2, colour);
+	else if (surface->bpp == SURFACE_BPP_1)
+		surfaceDrawLineDotted1_set(surface, x1, y1, x2, y2);
 }
 
 

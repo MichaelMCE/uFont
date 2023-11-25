@@ -131,9 +131,9 @@ static inline intptr_t *getPixelAddress32 (uint8_t *frame, const int pitch, cons
 	return (intptr_t*)(frame+((y*pitch)+(x<<2)));
 }
 
-static inline void readPng32To16_565 (uint8_t *frame, png_structp *png_ptr, int width, int height, uint8_t *line, int ox, int oy, int passCount)
+static inline void readPng32To16_565 (uint8_t *frame, png_structp *png_ptr, int width, int height, uint8_t *line, int ox, int oy, int passCount, const uint32_t pitch)
 {
-	const int pitch = width<<1;
+	//const int pitch = width<<1;
 	
 	while(passCount--){
 	for (int y = 0; y < height; y++){
@@ -248,18 +248,18 @@ inline void readPng32To12 (uint8_t *frame, png_structp *png_ptr, int width, int 
 static fileio_t *png_fio = NULL;
 
 
-static inline int readPngToFrame (uint8_t *frame, png_structp *png_ptr, int bpp, int width, int height, int ox, int oy, int passCount)
+static inline int readPngToFrame (uint8_t *frame, png_structp *png_ptr, int bpp, int width, int height, int ox, int oy, int passCount, const uint32_t bufferPitch)
 {
 	uint8_t line[(width * 4) + 4];		// enough for a single RGBA line
 
 	int ret = 1;
 	switch (bpp){
-	  //case BPP_8:  readPng32To8      (frame, png_ptr, width, height, line, ox, oy, passCount); break;
-	  //case BPP_12: readPng32To12     (frame, png_ptr, width, height, line, ox, oy, passCount); break; // non packed 12bit
-	  //case BPP_15: readPng32To16_555 (frame, png_ptr, width, height, line, ox, oy, passCount); break;
-	  case BPP_16: readPng32To16_565(frame, png_ptr, width, height, line, ox, oy, passCount); break;
-	  //case BPP_24: readPng32To24     (frame, png_ptr, width, height, line, ox, oy, passCount); break;
-	  //case BPP_32: readPng32To32A_cpy(frame, png_ptr, width, height, line, ox, oy, passCount); break;
+	  //case BPP_8:  readPng32To8      (frame, png_ptr, width, height, line, ox, oy, passCount, bufferPitch); break;
+	  //case BPP_12: readPng32To12     (frame, png_ptr, width, height, line, ox, oy, passCount, bufferPitch); break; // non packed 12bit
+	  //case BPP_15: readPng32To16_555 (frame, png_ptr, width, height, line, ox, oy, passCount, bufferPitch); break;
+	  case BPP_16: readPng32To16_565(frame, png_ptr, width, height, line, ox, oy, passCount, bufferPitch); break;
+	  //case BPP_24: readPng32To24     (frame, png_ptr, width, height, line, ox, oy, passCount, bufferPitch); break;
+	  //case BPP_32: readPng32To32A_cpy(frame, png_ptr, width, height, line, ox, oy, passCount, bufferPitch); break;
 	  //default: printf("libpng: format %i not implemented\r\n", bpp); ret = 0;
 	};
 
@@ -277,7 +277,7 @@ void png_read_dataCb (png_structp png_ptr, png_bytep data, png_size_t length)
 		printf("png read error, length:%i %i\r\n", check, length);
 }
 
-static int32_t loadPng (uint8_t *frame, const int flags, const char *filename, const int32_t ox, const int32_t oy, uint32_t *width, uint32_t *height, uint32_t *bpp)
+static int32_t loadPng (uint8_t *frame, const int flags, const char *filename, const int32_t ox, const int32_t oy, uint32_t *width, uint32_t *height, uint32_t *bpp, uint32_t bufferPitch)
 {
 	png_structp png_ptr;
 	png_infop info_ptr;
@@ -347,8 +347,10 @@ static int32_t loadPng (uint8_t *frame, const int flags, const char *filename, c
 	}
 
 	int ret = 1;
-	if (frame)
-		ret = readPngToFrame(frame, &png_ptr, flags, *width, *height, ox, oy, passCount);
+	if (frame){
+		if (!bufferPitch) bufferPitch = (*width)<<1;
+		ret = readPngToFrame(frame, &png_ptr, flags, *width, *height, ox, oy, passCount, bufferPitch);
+	}
 	
 	if (!ret)
 		png_read_end(png_ptr, info_ptr);
@@ -358,13 +360,20 @@ static int32_t loadPng (uint8_t *frame, const int flags, const char *filename, c
 	return ret;
 }
 
-
 int32_t png_read (const char *filename, uint8_t *buffer, const int32_t bufferbpp, const int32_t ox, const int32_t oy)
 {
 	uint32_t width = 0;
 	uint32_t height = 0;
 	
-	return loadPng(buffer, bufferbpp, filename, ox, oy, &width, &height, NULL);
+	return loadPng(buffer, bufferbpp, filename, ox, oy, &width, &height, NULL, 0);
+}
+
+int32_t png_readEx (const char *filename, uint8_t *buffer, const uint32_t bufferPitch, const int32_t bufferbpp, const int32_t ox, const int32_t oy)
+{
+	uint32_t width = 0;
+	uint32_t height = 0;
+	
+	return loadPng(buffer, bufferbpp, filename, ox, oy, &width, &height, NULL, bufferPitch);
 }
 
 int32_t png_metrics (const char *filename, uint32_t *width, uint32_t *height, uint32_t *filebpp)
@@ -373,7 +382,7 @@ int32_t png_metrics (const char *filename, uint32_t *width, uint32_t *height, ui
 	*height = 0;
 	*filebpp = 0;
 
-	return loadPng(NULL, 0, filename, 0, 0, width, height, filebpp);
+	return loadPng(NULL, 0, filename, 0, 0, width, height, filebpp, 0);
 }
 
 
