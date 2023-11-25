@@ -16,10 +16,13 @@ endif
 #GLOP = -ftree-vectorize -floop-interchange -floop-strip-mine -floop-block
 GLOP =
 
-CFLAGS = -flto -Wno-pointer-sign -DNO_DUMMY_DECL $(BITMODE) -I../include -Wall -march=i686 -mtune=i686 -O2 -DSTBI_FAILURE_USERMSG -D_WIN32 -D_WIN32_WINNT=0x0501 -DWINVER=0x0501 -D__WIN32__=1 -std=gnu99 -funroll-loops -finline-functions -fomit-frame-pointer -pipe -s -DUSE_MMX -DHAVE_MMX -DHAVE_MMX1 -DUSE_MMX1 -mmmx -msse -mfpmath=sse,387 -fgcse-las -fgcse-sm -fgcse-lm -fmodulo-sched-allow-regmoves -fmodulo-sched -ftree-vectorizer-verbose=0 $(GLOP) -Wno-strict-aliasing 
+# -flto
+CFLAGS = -Wno-pointer-sign -DNO_DUMMY_DECL $(BITMODE) -I../include -Wall -march=i686 -mtune=i686 -O2 -DSTBI_FAILURE_USERMSG -D_WIN32 -D_WIN32_WINNT=0x0501 -DWINVER=0x0501 -D__WIN32__=1 -std=gnu99 -funroll-loops -finline-functions -fomit-frame-pointer -pipe -s -DUSE_MMX -DHAVE_MMX -DHAVE_MMX1 -DUSE_MMX1 -mmmx -msse -mfpmath=sse,387 -fgcse-las -fgcse-sm -fgcse-lm -fmodulo-sched-allow-regmoves -fmodulo-sched -ftree-vectorizer-verbose=0 $(GLOP) -Wno-strict-aliasing 
 #CFLAGS = $(BITMODE) -static-libgcc -I../include  -D_WIN32_WINNT=0x0601 -DWINVER=0x0601 -D__WIN32__=1 -std=gnu99  -Wall -march=i686 -mtune=i686 -O2
 
-LIBS = $(BITMODE) -flto -static-libgcc -L../libs/ -L"lib" -lm -lmylcddll -lole32 -luuid
+
+#-flto 
+LIBS = $(BITMODE) -static-libgcc -L../libs/ -L"lib" -lm -lmylcddll -lole32 -luuid
 
 PNG = ../src/libpng/png.o \
 	../src/libpng/pngerror.o \
@@ -54,7 +57,7 @@ LIBOBJECTS = $(UFONTOBJECTS) $(ZLIB) $(PNG)
 
 EXAMPLES=glyph.exe clock.exe mystify.exe ball.exe cube.exe palettes.exe helloworld.exe uflookup.exe \
 		charrefs.exe utf8demo.exe bdf2ufont.exe multifont.exe stars.exe fontfun.exe anidemo.exe shapes.exe \
-		dump.exe utf8combining.exe spritetext.exe wrap.exe
+		dump.exe utf8combining.exe spritetext.exe wrap.exe tuner.exe
 
 all : $(EXAMPLES)
 
@@ -79,6 +82,7 @@ clock.exe: $(LIBOBJECTS)
 dump.exe: $(LIBOBJECTS)
 glyph.exe: $(LIBOBJECTS)
 wrap.exe: $(LIBOBJECTS)
+tuner.exe: $(LIBOBJECTS)
 
 
 # -static-libgcc
