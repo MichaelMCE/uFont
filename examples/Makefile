@@ -57,7 +57,7 @@ LIBOBJECTS = $(UFONTOBJECTS) $(ZLIB) $(PNG)
 
 EXAMPLES=glyph.exe clock.exe mystify.exe ball.exe cube.exe palettes.exe helloworld.exe uflookup.exe \
 		charrefs.exe utf8demo.exe bdf2ufont.exe multifont.exe stars.exe fontfun.exe anidemo.exe shapes.exe \
-		dump.exe utf8combining.exe spritetext.exe wrap.exe tuner.exe
+		dump.exe utf8combining.exe spritetext.exe wrap.exe tuner.exe drawop.exe
 
 all : $(EXAMPLES)
 
@@ -83,6 +83,7 @@ dump.exe: $(LIBOBJECTS)
 glyph.exe: $(LIBOBJECTS)
 wrap.exe: $(LIBOBJECTS)
 tuner.exe: $(LIBOBJECTS)
+drawop.exe: $(LIBOBJECTS)
 
 
 # -static-libgcc
