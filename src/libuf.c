@@ -22,7 +22,7 @@
 #include <sys/types.h>
 #include <stdarg.h>
 #include <ctype.h>
-#include <wtypes.h>
+//#include <wtypes.h>
 #include <math.h>
 
 #include "pngcommon.h"
@@ -42,18 +42,17 @@ static int DHEIGHT = 0;
 
 
 
-
-static inline void *uf_malloc (size_t size/*, const uint8_t *func*/)
+static inline void *uf_malloc (size_t size)
 {
 	return malloc(size);
 }
 
-static inline void *uf_calloc (size_t nelem, size_t elsize/*, const uint8_t *func*/)
+static inline void *uf_calloc (size_t nelem, size_t elsize)
 {
 	return calloc(nelem, elsize);
 }
 
-static inline void uf_free (void *ptr/*, const uint8_t *func*/)
+static inline void uf_free (void *ptr)
 {
 	free(ptr);
 }
@@ -61,7 +60,7 @@ static inline void uf_free (void *ptr/*, const uint8_t *func*/)
 static inline int UTF8ToUTF32 (uint8_t *buffer, uint32_t *wc)
 {
 	
-	uint32_t n;
+	uint32_t n = 0;
 
 	// guess length of multi-char
 	for (n = 0; n < 7; n++){
@@ -1137,6 +1136,31 @@ void fontApplySurfaceTextureEx (_ufont_t *font, const _ufont_surface_t *const te
 	}	
 }
 
+static inline void drawImage16 (_ufont_surface_t *surface, _ufont_surface_t *image, const int isCentered, const int cx, const int cy)
+{
+	int dx = cx;
+	int dy = cy;
+	if (isCentered){
+		dx -= (image->width/2);
+		dy -= (image->height/2);
+	}
+
+	const int texPitch = CALC_PITCH_16(image->width);
+	
+	for (int y = 0; y < image->height; y++, dy++){
+		int _dx = dx;
+		
+		for (int x = 0; x < image->width; x++, _dx++){
+			uint16_t col = getPixel16(image->pixels, texPitch, x, y);
+			setPixel16_bc(surface, _dx, dy, col);
+		}
+	}
+}
+
+void surfaceDrawImage (_ufont_surface_t *surface, _ufont_surface_t *image, const int flagCenterImage, const int cx, const int cy)
+{
+	drawImage16(surface, image, flagCenterImage, cx, cy);
+}
 
 static inline void drawSprite (_ufont_surface_t *surface, _ufont_surface_t *sprite, const int cx, const int cy, const uint16_t mask)
 {
@@ -2636,6 +2660,21 @@ void fontSetDisplayBuffer (_ufont_t *font, void *pixels, const int width, const 
 	
 }
 
+int fontLoadTexture (_ufont_surface_t *surface, const char *path, const int x, const int y)
+{
+	uint32_t width, height, bpc;
+	if (png_metrics(path, &width, &height, &bpc)){
+		uint8_t *pixels = surface->pixels;
+		
+		
+		printf("fontLoadTexture %i %i, %i\n", width, height, bpc);
+		
+		if (png_readEx(path, pixels, CALC_PITCH_16(surface->width), BPP_16, x, y))
+			return 1;
+	}
+	return 0;
+}
+
 _ufont_surface_t *fontCreateTexture (const char *path)
 {
 	uint32_t width, height, bpc;
@@ -2648,17 +2687,16 @@ _ufont_surface_t *fontCreateTexture (const char *path)
 			uf_free(pixels);
 			return NULL;
 		}
-		
+
 		_ufont_surface_t *surface = (_ufont_surface_t*)uf_calloc(1, sizeof(_ufont_surface_t));
 		if (surface && pixels){
 			fontSurfaceFill(surface, width, height, 0, pixels);
 			surface->flags8 |= SURFACE_PALLOC;
-			surface->bpp = SURFACE_BPP_16;		
+			surface->bpp = SURFACE_BPP_16;
 			surface->size = height * CALC_PITCH_16(width);
-            return surface;
+			return surface;
 		}
 	}
-
 	return NULL;
 }
 
