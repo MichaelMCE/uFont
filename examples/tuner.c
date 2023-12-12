@@ -16,8 +16,9 @@
 
 #include "common.h"
 
-
+#define FONT14		UFDIR"consola14.uf"
 #define FONT24		UFDIR"consola24.uf"
+#define FONT30		UFDIR"teutonweiss-bold30.uf"
 #define FONT38		UFDIR"76london38.uf"
 #define FONT50		UFDIR"76london50.uf"
 #define FONT80		UFDIR"76london80.uf"
@@ -33,7 +34,9 @@
 static _ufont_t font38;
 static _ufont_t font50;
 static _ufont_t font80;
+static _ufont_t font30;
 static _ufont_t font24;
+static _ufont_t font14;
 static _ufont_t fontDelay;
 
 enum _notes {
@@ -71,6 +74,32 @@ static notetable_t notetable[12] = {
  {NOTE_A_SHARP, "A#", {}},
  {NOTE_B,       "B", {}},
 };
+
+
+
+
+#define C4_PRESET_CACHESIZE			7
+#define C4_PRESET_DISPLAYED			7
+
+typedef struct {
+	int16_t c4Idx;					// -1 invalid
+	char name[34];
+	//as_preset_t preset;
+}c4_preset_t;
+
+static c4_preset_t presetCache[C4_PRESET_CACHESIZE] =		// current preset plus 3 eitherside
+{
+	{0, "Turn Away Wah"},
+	{1, "voice sound"},
+	{2, "DBX 11"},
+	{3, "Poly Pitch Swell"},
+	{4, "Funk Dragon"},
+	{5, "Flashlight Bass"},
+	{6, "slow attack  si/sq filter"}
+};
+
+
+static uint32_t c4_presetIdx = 3;		// active preset
 
 
 
@@ -359,6 +388,81 @@ int drawDelay (_ufont_surface_t *surface, const int delayPeriod)
 	return 1;
 }
 
+static c4_preset_t *c4_getPreset (const int16_t c4PresetIdx)
+{
+	for (int i = 0; i < C4_PRESET_CACHESIZE; i++){
+		c4_preset_t *preset = &presetCache[i];
+		if (preset->c4Idx == c4PresetIdx)
+			return preset;
+	}
+	return NULL;
+}
+
+int drawC4 (_ufont_surface_t *surface, const int data)
+{
+	static int scrollOffset = 0;
+	static int scrollDir = 1;
+	static int scrollWidth;
+	static int scrollPreset = -1;
+	
+	char textBuffer[64];
+	
+	
+	sprintf(textBuffer, "%i", c4_presetIdx+1);
+	int width;
+	fontGetMetrics(&font30, (uint8_t*)textBuffer, &width, NULL);
+	int x = ((TFT_WIDTH - width) / 2) - 1;
+	int y = -4;
+	fontPrint(&font30, &x, &y, (uint8_t*)textBuffer);
+
+	
+	const uint8_t xOffset[C4_PRESET_DISPLAYED] = {33, 18, 8, 0, 6, 18, 33};
+	const uint8_t yOffset[C4_PRESET_DISPLAYED] = {40, 57+1, 78+2, 99+3, 135+4, 161+5, 187+6};
+	const uint8_t displayHalf = C4_PRESET_DISPLAYED/2;
+
+	for (int i = -displayHalf; i <= displayHalf; i++){
+		_ufont_t *font = &font24;
+		if (i == 0)
+			font = &font38;
+		else if (i == -displayHalf || i == displayHalf)
+			font = &font14;
+		
+		c4_preset_t *preset = c4_getPreset(c4_presetIdx + i);
+		if (preset)
+			strcpy(textBuffer, preset->name);
+		else
+			strcpy(textBuffer, " ");
+
+		if (i == 0){
+			fontGetMetrics(font, (uint8_t*)textBuffer, &width, NULL);
+			if (width != scrollWidth || scrollPreset != c4_presetIdx + i){
+				scrollWidth = width;
+				scrollOffset = 0;
+				scrollDir = 1;
+				scrollPreset = c4_presetIdx + i;
+			}
+			
+			if (scrollDir){
+				scrollOffset--;
+				if (scrollOffset < -((width-TFT_WIDTH)+16))
+					scrollDir = 0;
+			}else{
+				scrollOffset++;
+				if (scrollOffset > 8)
+					scrollDir = 1;
+			}
+
+			x = xOffset[i+displayHalf] + scrollOffset;
+		}else{
+			x = xOffset[i+displayHalf];
+		}
+
+		y = yOffset[i+displayHalf] - 2;
+		fontPrint(font, &x, &y, (uint8_t*)textBuffer);
+	}
+	return 1;
+}
+
 int main (int argc, char **argv)
 {
 	if (!initDemoConfig("config.cfg"))
@@ -372,8 +476,14 @@ int main (int argc, char **argv)
 	const int delayPeriod = 525;
 
 
+	if (!fontOpen(&font14, FONT14))
+		return 0;
+		
 	if (!fontOpen(&font24, FONT24))
-		return 0;	
+		return 0;
+
+	if (!fontOpen(&font30, FONT30))
+		return 0;
 
 	if (!fontOpen(&font38, FONT38))
 		return 0;
@@ -396,6 +506,8 @@ int main (int argc, char **argv)
 	fontSetDisplayBuffer(&font50, buffer, DWIDTH, DHEIGHT);
 	fontSetDisplayBuffer(&font80, buffer, DWIDTH, DHEIGHT);
 	fontSetDisplayBuffer(&font24, buffer, DWIDTH, DHEIGHT);
+	fontSetDisplayBuffer(&font30, buffer, DWIDTH, DHEIGHT);
+	fontSetDisplayBuffer(&font14, buffer, DWIDTH, DHEIGHT);
 	fontSetDisplayBuffer(&fontDelay, buffer, DWIDTH, DHEIGHT);
 
 	// create a 1BPP work surface. this is the initial work surface
@@ -405,22 +517,36 @@ int main (int argc, char **argv)
 	fontSetRenderSurface(&font38, surface);
 	fontSetRenderSurface(&font50, surface);
 	fontSetRenderSurface(&font80, surface);
+	fontSetRenderSurface(&font30, surface);
 	fontSetRenderSurface(&font24, surface);
+	fontSetRenderSurface(&font14, surface);
 	fontSetRenderSurface(&fontDelay, surface);	
 
 	//surfaceDrawRectangle(surface, 0, 0, 239, 239, 1);
 	surfaceDrawCircle(surface, 120, 120, 120, 1);
 
-	if (1)
+	if (0){
 		drawTuner(surface, notef, centScale);
-	else
+	}else if (0){
 		drawDelay(surface, delayPeriod);
+	}else{
 
+		for (int i = 0; i < 1520; i++){
+			surfaceDrawCircle(surface, 120, 120, 120, 1);
+			drawC4(surface, 0);
 
-	fontApplySurface(&fontDelay, 7, 7);
-	lUpdate(hw, buffer, sizeof(buffer));
+			fontApplySurface(&fontDelay, 7, 7);
+			lUpdate(hw, buffer, sizeof(buffer));
+			
+			fontCleanSurface(NULL, surface);
+			clearFrame(buffer, 0);
+			lSleep(20);
+		}
+	}
 
 	fontSurfaceFree(surface);
+	fontClose(&font14);
+	fontClose(&font30);
 	fontClose(&font24);
 	fontClose(&font38);
 	fontClose(&font50);
