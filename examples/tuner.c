@@ -512,6 +512,7 @@ int main (int argc, char **argv)
 
 	// create a 1BPP work surface. this is the initial work surface
 	_ufont_surface_t *surface = fontCreateSurface(DWIDTH, DHEIGHT, COLOUR_24TO16(0xFFBF33), NULL);
+	_ufont_surface_t *mask = fontCreateSurface(DWIDTH, DHEIGHT, COLOUR_24TO16(0xFFBF33), NULL);
 	
 	// make this the active surface
 	fontSetRenderSurface(&font38, surface);
@@ -522,20 +523,20 @@ int main (int argc, char **argv)
 	fontSetRenderSurface(&font14, surface);
 	fontSetRenderSurface(&fontDelay, surface);	
 
-	//surfaceDrawRectangle(surface, 0, 0, 239, 239, 1);
 	surfaceDrawCircle(surface, 120, 120, 120, 1);
-
+	surfaceDrawCircleFilled(mask, 120, 120, 120, 1);
+		
 	if (0){
 		drawTuner(surface, notef, centScale);
 	}else if (0){
 		drawDelay(surface, delayPeriod);
-	}else{
-
+	}else if (1){
+		
 		for (int i = 0; i < 1520; i++){
 			surfaceDrawCircle(surface, 120, 120, 120, 1);
 			drawC4(surface, 0);
 
-			fontApplySurface(&fontDelay, 7, 7);
+			fontApplySurfaceMask(&fontDelay, mask, 7, 7);
 			lUpdate(hw, buffer, sizeof(buffer));
 			
 			fontCleanSurface(NULL, surface);
@@ -544,6 +545,9 @@ int main (int argc, char **argv)
 		}
 	}
 
+	fontApplySurfaceMask(&fontDelay, mask, 7, 7);
+	lUpdate(hw, buffer, sizeof(buffer));
+	
 	fontSurfaceFree(surface);
 	fontClose(&font14);
 	fontClose(&font30);
