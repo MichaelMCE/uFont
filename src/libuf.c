@@ -2058,7 +2058,7 @@ static inline int printWordwrap (_ufont_t *font, int *desX, int *desY, const uin
 				if (height > maxH) maxH = height;
 				if ((x+width)-1 > maxX-1){
 					x = returnCol;
-					y += maxH - font->render.linePadding;
+					y += maxH + font->render.linePadding;
 					maxH = 0;
 				}
 			}else{
@@ -2124,7 +2124,7 @@ static inline int printWordwrap8 (_ufont_t *font, int *desX, int *desY, const ui
 				if (height > maxH) maxH = height;
 				if ((x+width)-1 > maxX-1){
 					x = returnCol;
-					y += maxH - font->render.linePadding;
+					y += maxH + font->render.linePadding;
 					maxH = 0;
 				}
 			}else{
