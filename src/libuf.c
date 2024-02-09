@@ -1976,7 +1976,7 @@ static inline uint8_t **breakString (const uint8_t *text)
 {
 	if (!text || !text[0]) return NULL;
 		
-	int strTotal = 8;
+	int strTotal = 16;
 	int x1 = 0;
 	int x2 = 0;
 	int wIdx = 0;
